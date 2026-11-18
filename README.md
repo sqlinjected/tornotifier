@@ -8,7 +8,7 @@ still early, adding alerts as i go.
 
 - [x] enemy leaves hospital
 - [x] oc ready / oc status changes
-- [ ] energy/nerve full
+- [x] energy/nerve full
 - [x] drug/booster cooldown done
 - [ ] landing from travel
 
