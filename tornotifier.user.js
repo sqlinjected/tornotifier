@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         tornotifier
 // @namespace    sqlinjected
-// @version      0.7
+// @version      0.8
 // @description  sound alerts for torn events
 // @match        https://www.torn.com/*
 // @grant        none
@@ -159,7 +159,7 @@
         return;
       }
 
-      const oc = data.organizedCrime || data.organizedcrime;
+      const oc = data.organizedCrime || data.organized_crime || data.organizedcrime;
       if (!oc) {
         ocStatus = null;
         console.log('tornotifier: no oc');
@@ -236,4 +236,72 @@
       'background:#222;color:#fff;padding:4px 8px;border-radius:4px;' +
       'font-size:12px;cursor:pointer;';
 
-    const panel =
+    const panel = document.createElement('div');
+    panel.style.cssText = 'position:fixed;bottom:36px;left:8px;z-index:99999;' +
+      'background:#222;color:#fff;padding:8px;border-radius:4px;' +
+      'font-size:12px;display:none;';
+
+    const enemyInput = document.createElement('input');
+    enemyInput.placeholder = 'enemy faction id';
+    enemyInput.value = getEnemy();
+    enemyInput.style.cssText = 'width:130px;margin-bottom:6px;color:#000;';
+
+    const save = makeButton('save', () => {
+      const id = enemyInput.value.trim();
+      localStorage.setItem(ENEMY_NAME, id);
+      inHosp.clear();
+      console.log('tornotifier: enemy set to', id || 'none');
+      if (id) pollEnemy(key, id);
+    });
+
+    const mute = makeButton(isMuted() ? 'unmute' : 'mute', () => {
+      localStorage.setItem(MUTE_NAME, isMuted() ? '0' : '1');
+      mute.textContent = isMuted() ? 'unmute' : 'mute';
+    });
+
+    const test = makeButton('test sound', () => {
+      audio.resume().then(alertSound);
+    });
+
+    const resetKey = makeButton('reset key', () => {
+      localStorage.removeItem(KEY_NAME);
+      console.log('tornotifier: key removed, reload to enter a new one');
+    });
+
+    panel.append(enemyInput, document.createElement('br'), save, mute, test, resetKey);
+
+    btn.addEventListener('click', () => {
+      panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
+    });
+
+    document.body.append(btn, panel);
+  }
+
+  async function start() {
+    const key = getKey();
+    if (!key) {
+      console.log('tornotifier: no api key, stopping');
+      return;
+    }
+
+    const ok = await checkKey(key);
+    if (!ok) return;
+
+    buildPanel(key);
+
+    const enemy = getEnemy();
+    if (enemy) pollEnemy(key, enemy);
+    pollOC(key);
+    pollBars(key);
+
+    setInterval(() => {
+      poll(key);
+      pollOC(key);
+      pollBars(key);
+      const id = getEnemy();
+      if (id) pollEnemy(key, id);
+    }, POLL_MS);
+  }
+
+  start();
+})();
