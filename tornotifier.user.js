@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         tornotifier
 // @namespace    sqlinjected
-// @version      0.5
+// @version      0.6
 // @description  sound alerts for torn events
 // @match        https://www.torn.com/*
 // @grant        none
@@ -13,9 +13,11 @@
   const KEY_NAME = 'tornotifier_key';
   const ENEMY_NAME = 'tornotifier_enemy';
   const MUTE_NAME = 'tornotifier_muted';
+  const OC_ALERTED_NAME = 'tornotifier_oc_alerted';
   const POLL_MS = 30000;
   const audio = new AudioContext();
   const inHosp = new Set();
+  let ocStatus = null;
 
   function isMuted() {
     return localStorage.getItem(MUTE_NAME) === '1';
@@ -41,6 +43,12 @@
   function alertSound() {
     beep(988, 150);
     setTimeout(() => beep(1319, 150), 180);
+  }
+
+  function ocSound() {
+    beep(660, 120);
+    setTimeout(() => beep(880, 120), 150);
+    setTimeout(() => beep(1100, 200), 300);
   }
 
   document.addEventListener('click', () => {
@@ -136,6 +144,42 @@
     }
   }
 
+  async function pollOC(key) {
+    try {
+      const data = await api(key, 'user/organizedcrime');
+
+      if (data.error) {
+        console.log('tornotifier: oc poll error -', data.error.error);
+        return;
+      }
+
+      const oc = data.organizedCrime || data.organizedcrime;
+      if (!oc) {
+        ocStatus = null;
+        console.log('tornotifier: no oc');
+        return;
+      }
+
+      console.log('tornotifier: oc -', oc.name, oc.status);
+
+      if (ocStatus && oc.status !== ocStatus) {
+        console.log('tornotifier: oc status changed -', ocStatus, '->', oc.status);
+        alertSound();
+      }
+      ocStatus = oc.status;
+
+      const now = Date.now() / 1000;
+      const alerted = localStorage.getItem(OC_ALERTED_NAME);
+      if (oc.ready_at && now >= oc.ready_at && alerted !== String(oc.id)) {
+        localStorage.setItem(OC_ALERTED_NAME, String(oc.id));
+        console.log('tornotifier: oc ready -', oc.name);
+        ocSound();
+      }
+    } catch (err) {
+      console.log('tornotifier: oc poll failed -', err);
+    }
+  }
+
   function makeButton(text, onClick) {
     const b = document.createElement('button');
     b.textContent = text;
@@ -206,9 +250,11 @@
 
     const enemy = getEnemy();
     if (enemy) pollEnemy(key, enemy);
+    pollOC(key);
 
     setInterval(() => {
       poll(key);
+      pollOC(key);
       const id = getEnemy();
       if (id) pollEnemy(key, id);
     }, POLL_MS);
