@@ -10,7 +10,7 @@ still early, adding alerts as i go.
 - [x] oc ready / oc status changes
 - [x] energy/nerve full
 - [x] drug/booster cooldown done
-- [ ] landing from travel
+- [x] landing from travel
 
 ## install
 
