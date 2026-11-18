@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         tornotifier
 // @namespace    sqlinjected
-// @version      0.8
+// @version      0.9
 // @description  sound alerts for torn events
 // @match        https://www.torn.com/*
 // @grant        none
@@ -15,6 +15,7 @@
   const MUTE_NAME = 'tornotifier_muted';
   const OC_ALERTED_NAME = 'tornotifier_oc_alerted';
   const FULL_PREFIX = 'tornotifier_full_';
+  const CD_PREFIX = 'tornotifier_cd_';
   const POLL_MS = 30000;
   const audio = new AudioContext();
   const inHosp = new Set();
@@ -55,6 +56,11 @@
   function barSound() {
     beep(523, 200);
     setTimeout(() => beep(659, 250), 230);
+  }
+
+  function cdSound() {
+    beep(784, 150);
+    setTimeout(() => beep(587, 250), 180);
   }
 
   document.addEventListener('click', () => {
@@ -221,6 +227,39 @@
     }
   }
 
+  function checkCooldown(name, secs) {
+    if (typeof secs !== 'number') return;
+    const flag = CD_PREFIX + name;
+    const wasActive = localStorage.getItem(flag) === '1';
+
+    if (secs > 0 && !wasActive) {
+      localStorage.setItem(flag, '1');
+    } else if (secs <= 0 && wasActive) {
+      localStorage.setItem(flag, '0');
+      console.log('tornotifier:', name, 'cooldown done');
+      cdSound();
+    }
+  }
+
+  async function pollCooldowns(key) {
+    try {
+      const data = await api(key, 'user/cooldowns');
+
+      if (data.error) {
+        console.log('tornotifier: cooldowns poll error -', data.error.error);
+        return;
+      }
+
+      const cd = data.cooldowns || data;
+      console.log('tornotifier: cooldowns - drug', cd.drug + 's', 'booster', cd.booster + 's');
+
+      checkCooldown('drug', cd.drug);
+      checkCooldown('booster', cd.booster);
+    } catch (err) {
+      console.log('tornotifier: cooldowns poll failed -', err);
+    }
+  }
+
   function makeButton(text, onClick) {
     const b = document.createElement('button');
     b.textContent = text;
@@ -293,11 +332,13 @@
     if (enemy) pollEnemy(key, enemy);
     pollOC(key);
     pollBars(key);
+    pollCooldowns(key);
 
     setInterval(() => {
       poll(key);
       pollOC(key);
       pollBars(key);
+      pollCooldowns(key);
       const id = getEnemy();
       if (id) pollEnemy(key, id);
     }, POLL_MS);
