@@ -4,7 +4,7 @@ userscript that plays a sound when stuff happens in torn. made it so i don't hav
 
 still early, adding alerts as i go.
 
-## what it does (or will)
+## what it does
 
 - enemy leaves hospital
 - oc ready
