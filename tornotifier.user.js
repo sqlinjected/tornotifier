@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         tornotifier
 // @namespace    sqlinjected
-// @version      0.3
+// @version      0.4
 // @description  sound alerts for torn events
 // @match        https://www.torn.com/*
 // @grant        none
@@ -11,8 +11,10 @@
   'use strict';
 
   const KEY_NAME = 'tornotifier_key';
+  const ENEMY_NAME = 'tornotifier_enemy';
   const POLL_MS = 30000;
   const audio = new AudioContext();
+  const inHosp = new Set();
 
   function beep(freq = 880, ms = 200) {
     if (audio.state !== 'running') {
@@ -28,6 +30,11 @@
     gain.connect(audio.destination);
     osc.start();
     osc.stop(audio.currentTime + ms / 1000);
+  }
+
+  function alertSound() {
+    beep(988, 150);
+    setTimeout(() => beep(1319, 150), 180);
   }
 
   document.addEventListener('click', () => {
@@ -47,6 +54,16 @@
       }
     }
     return key;
+  }
+
+  function getEnemy() {
+    let id = localStorage.getItem(ENEMY_NAME);
+    if (id === null) {
+      id = prompt('tornotifier: enemy faction id to watch (leave blank to skip)') || '';
+      id = id.trim();
+      localStorage.setItem(ENEMY_NAME, id);
+    }
+    return id;
   }
 
   async function api(key, path) {
@@ -90,6 +107,35 @@
     }
   }
 
+  async function pollEnemy(key, factionId) {
+    try {
+      const data = await api(key, 'faction/' + factionId + '/members');
+
+      if (data.error) {
+        console.log('tornotifier: enemy poll error -', data.error.error);
+        return;
+      }
+
+      const members = Array.isArray(data.members)
+        ? data.members
+        : Object.values(data.members);
+
+      for (const m of members) {
+        if (m.status.state === 'Hospital') {
+          inHosp.add(m.id);
+        } else if (inHosp.has(m.id)) {
+          inHosp.delete(m.id);
+          console.log('tornotifier:', m.name, 'is out of hospital');
+          alertSound();
+        }
+      }
+
+      console.log('tornotifier: enemies in hospital -', inHosp.size);
+    } catch (err) {
+      console.log('tornotifier: enemy poll failed -', err);
+    }
+  }
+
   async function start() {
     const key = getKey();
     if (!key) {
@@ -100,7 +146,13 @@
     const ok = await checkKey(key);
     if (!ok) return;
 
-    setInterval(() => poll(key), POLL_MS);
+    const enemy = getEnemy();
+    if (enemy) pollEnemy(key, enemy);
+
+    setInterval(() => {
+      poll(key);
+      if (enemy) pollEnemy(key, enemy);
+    }, POLL_MS);
   }
 
   start();
