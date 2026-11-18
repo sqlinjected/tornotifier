@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         tornotifier
 // @namespace    sqlinjected
-// @version      0.2
+// @version      0.3
 // @description  sound alerts for torn events
 // @match        https://www.torn.com/*
 // @grant        none
@@ -11,6 +11,7 @@
   'use strict';
 
   const KEY_NAME = 'tornotifier_key';
+  const POLL_MS = 30000;
   const audio = new AudioContext();
 
   function beep(freq = 880, ms = 200) {
@@ -48,12 +49,16 @@
     return key;
   }
 
-   async function checkKey(key) {
+  async function api(key, path) {
+    const res = await fetch('https://api.torn.com/v2/' + path, {
+      headers: { Authorization: 'ApiKey ' + key },
+    });
+    return res.json();
+  }
+
+  async function checkKey(key) {
     try {
-      const res = await fetch('https://api.torn.com/v2/user/basic', {
-        headers: { Authorization: 'ApiKey ' + key },
-      });
-      const data = await res.json();
+      const data = await api(key, 'user/basic');
 
       if (data.error) {
         console.log('tornotifier: api error -', data.error.error);
@@ -70,11 +75,33 @@
     }
   }
 
-  const key = getKey();
-  if (!key) {
-    console.log('tornotifier: no api key, stopping');
-    return;
+  async function poll(key) {
+    try {
+      const data = await api(key, 'user/basic');
+
+      if (data.error) {
+        console.log('tornotifier: poll error -', data.error.error);
+        return;
+      }
+
+      console.log('tornotifier: status -', data.profile.status.description);
+    } catch (err) {
+      console.log('tornotifier: poll failed -', err);
+    }
   }
 
-  checkKey(key);
+  async function start() {
+    const key = getKey();
+    if (!key) {
+      console.log('tornotifier: no api key, stopping');
+      return;
+    }
+
+    const ok = await checkKey(key);
+    if (!ok) return;
+
+    setInterval(() => poll(key), POLL_MS);
+  }
+
+  start();
 })();
