@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         tornotifier
 // @namespace    sqlinjected
-// @version      0.1
+// @version      0.2
 // @description  sound alerts for torn events
 // @match        https://www.torn.com/*
 // @grant        none
@@ -14,6 +14,10 @@
   const audio = new AudioContext();
 
   function beep(freq = 880, ms = 200) {
+    if (audio.state !== 'running') {
+      console.log('tornotifier: sound locked, click the page once');
+      return;
+    }
     const osc = audio.createOscillator();
     const gain = audio.createGain();
     osc.type = 'sine';
@@ -24,6 +28,13 @@
     osc.start();
     osc.stop(audio.currentTime + ms / 1000);
   }
+
+  document.addEventListener('click', () => {
+    audio.resume().then(() => {
+      console.log('tornotifier: sound on');
+      beep(660, 150);
+    });
+  }, { once: true });
 
   function getKey() {
     let key = localStorage.getItem(KEY_NAME);
@@ -37,7 +48,7 @@
     return key;
   }
 
-  async function checkKey(key) {
+   async function checkKey(key) {
     try {
       const res = await fetch('https://api.torn.com/v2/user/basic', {
         headers: { Authorization: 'ApiKey ' + key },
