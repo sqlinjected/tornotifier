@@ -6,17 +6,26 @@ still early, adding alerts as i go.
 
 ## what it does
 
-- enemy leaves hospital
-- oc ready
-- energy/nerve full
-- drug/booster cooldown done
-- landing from travel
+- [x] enemy leaves hospital
+- [x] oc ready / oc status changes
+- [ ] energy/nerve full
+- [ ] drug/booster cooldown done
+- [ ] landing from travel
 
 ## install
 
 get [tampermonkey](https://www.tampermonkey.net/) (or use torn pda on mobile), open `tornotifier.user.js`, hit raw, and install.
 
 it'll ask for your api key the first time. a limited access key works. click the page once after it loads or your browser won't let it play sound.
+
+## settings
+
+click the **tn** button in the bottom left of torn to:
+
+- set the enemy faction id to watch
+- mute/unmute
+- play a test sound
+- reset your api key
 
 ## api key
 
