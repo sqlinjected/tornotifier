@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         tornotifier
 // @namespace    sqlinjected
-// @version      0.4
+// @version      0.5
 // @description  sound alerts for torn events
 // @match        https://www.torn.com/*
 // @grant        none
@@ -12,11 +12,17 @@
 
   const KEY_NAME = 'tornotifier_key';
   const ENEMY_NAME = 'tornotifier_enemy';
+  const MUTE_NAME = 'tornotifier_muted';
   const POLL_MS = 30000;
   const audio = new AudioContext();
   const inHosp = new Set();
 
+  function isMuted() {
+    return localStorage.getItem(MUTE_NAME) === '1';
+  }
+
   function beep(freq = 880, ms = 200) {
+    if (isMuted()) return;
     if (audio.state !== 'running') {
       console.log('tornotifier: sound locked, click the page once');
       return;
@@ -57,13 +63,7 @@
   }
 
   function getEnemy() {
-    let id = localStorage.getItem(ENEMY_NAME);
-    if (id === null) {
-      id = prompt('tornotifier: enemy faction id to watch (leave blank to skip)') || '';
-      id = id.trim();
-      localStorage.setItem(ENEMY_NAME, id);
-    }
-    return id;
+    return localStorage.getItem(ENEMY_NAME) || '';
   }
 
   async function api(key, path) {
@@ -136,6 +136,62 @@
     }
   }
 
+  function makeButton(text, onClick) {
+    const b = document.createElement('button');
+    b.textContent = text;
+    b.style.cssText = 'margin:2px;font-size:11px;cursor:pointer;';
+    b.addEventListener('click', onClick);
+    return b;
+  }
+
+  function buildPanel(key) {
+    const btn = document.createElement('div');
+    btn.textContent = 'tn';
+    btn.style.cssText = 'position:fixed;bottom:8px;left:8px;z-index:99999;' +
+      'background:#222;color:#fff;padding:4px 8px;border-radius:4px;' +
+      'font-size:12px;cursor:pointer;';
+
+    const panel = document.createElement('div');
+    panel.style.cssText = 'position:fixed;bottom:36px;left:8px;z-index:99999;' +
+      'background:#222;color:#fff;padding:8px;border-radius:4px;' +
+      'font-size:12px;display:none;';
+
+    const enemyInput = document.createElement('input');
+    enemyInput.placeholder = 'enemy faction id';
+    enemyInput.value = getEnemy();
+    enemyInput.style.cssText = 'width:130px;margin-bottom:6px;color:#000;';
+
+    const save = makeButton('save', () => {
+      const id = enemyInput.value.trim();
+      localStorage.setItem(ENEMY_NAME, id);
+      inHosp.clear();
+      console.log('tornotifier: enemy set to', id || 'none');
+      if (id) pollEnemy(key, id);
+    });
+
+    const mute = makeButton(isMuted() ? 'unmute' : 'mute', () => {
+      localStorage.setItem(MUTE_NAME, isMuted() ? '0' : '1');
+      mute.textContent = isMuted() ? 'unmute' : 'mute';
+    });
+
+    const test = makeButton('test sound', () => {
+      audio.resume().then(alertSound);
+    });
+
+    const resetKey = makeButton('reset key', () => {
+      localStorage.removeItem(KEY_NAME);
+      console.log('tornotifier: key removed, reload to enter a new one');
+    });
+
+    panel.append(enemyInput, document.createElement('br'), save, mute, test, resetKey);
+
+    btn.addEventListener('click', () => {
+      panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
+    });
+
+    document.body.append(btn, panel);
+  }
+
   async function start() {
     const key = getKey();
     if (!key) {
@@ -146,12 +202,15 @@
     const ok = await checkKey(key);
     if (!ok) return;
 
+    buildPanel(key);
+
     const enemy = getEnemy();
     if (enemy) pollEnemy(key, enemy);
 
     setInterval(() => {
       poll(key);
-      if (enemy) pollEnemy(key, enemy);
+      const id = getEnemy();
+      if (id) pollEnemy(key, id);
     }, POLL_MS);
   }
 
