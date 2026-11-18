@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         tornotifier
 // @namespace    sqlinjected
-// @version      0.6
+// @version      0.7
 // @description  sound alerts for torn events
 // @match        https://www.torn.com/*
 // @grant        none
@@ -14,6 +14,7 @@
   const ENEMY_NAME = 'tornotifier_enemy';
   const MUTE_NAME = 'tornotifier_muted';
   const OC_ALERTED_NAME = 'tornotifier_oc_alerted';
+  const FULL_PREFIX = 'tornotifier_full_';
   const POLL_MS = 30000;
   const audio = new AudioContext();
   const inHosp = new Set();
@@ -49,6 +50,11 @@
     beep(660, 120);
     setTimeout(() => beep(880, 120), 150);
     setTimeout(() => beep(1100, 200), 300);
+  }
+
+  function barSound() {
+    beep(523, 200);
+    setTimeout(() => beep(659, 250), 230);
   }
 
   document.addEventListener('click', () => {
@@ -180,6 +186,41 @@
     }
   }
 
+  function checkFull(name, bar) {
+    if (!bar) return;
+    const flag = FULL_PREFIX + name;
+    const full = bar.current >= bar.maximum;
+    const alerted = localStorage.getItem(flag) === '1';
+
+    if (full && !alerted) {
+      localStorage.setItem(flag, '1');
+      console.log('tornotifier:', name, 'full -', bar.current + '/' + bar.maximum);
+      barSound();
+    } else if (!full && alerted) {
+      localStorage.setItem(flag, '0');
+    }
+  }
+
+  async function pollBars(key) {
+    try {
+      const data = await api(key, 'user/bars');
+
+      if (data.error) {
+        console.log('tornotifier: bars poll error -', data.error.error);
+        return;
+      }
+
+      const bars = data.bars || data;
+      console.log('tornotifier: energy', bars.energy.current + '/' + bars.energy.maximum,
+        'nerve', bars.nerve.current + '/' + bars.nerve.maximum);
+
+      checkFull('energy', bars.energy);
+      checkFull('nerve', bars.nerve);
+    } catch (err) {
+      console.log('tornotifier: bars poll failed -', err);
+    }
+  }
+
   function makeButton(text, onClick) {
     const b = document.createElement('button');
     b.textContent = text;
@@ -195,70 +236,4 @@
       'background:#222;color:#fff;padding:4px 8px;border-radius:4px;' +
       'font-size:12px;cursor:pointer;';
 
-    const panel = document.createElement('div');
-    panel.style.cssText = 'position:fixed;bottom:36px;left:8px;z-index:99999;' +
-      'background:#222;color:#fff;padding:8px;border-radius:4px;' +
-      'font-size:12px;display:none;';
-
-    const enemyInput = document.createElement('input');
-    enemyInput.placeholder = 'enemy faction id';
-    enemyInput.value = getEnemy();
-    enemyInput.style.cssText = 'width:130px;margin-bottom:6px;color:#000;';
-
-    const save = makeButton('save', () => {
-      const id = enemyInput.value.trim();
-      localStorage.setItem(ENEMY_NAME, id);
-      inHosp.clear();
-      console.log('tornotifier: enemy set to', id || 'none');
-      if (id) pollEnemy(key, id);
-    });
-
-    const mute = makeButton(isMuted() ? 'unmute' : 'mute', () => {
-      localStorage.setItem(MUTE_NAME, isMuted() ? '0' : '1');
-      mute.textContent = isMuted() ? 'unmute' : 'mute';
-    });
-
-    const test = makeButton('test sound', () => {
-      audio.resume().then(alertSound);
-    });
-
-    const resetKey = makeButton('reset key', () => {
-      localStorage.removeItem(KEY_NAME);
-      console.log('tornotifier: key removed, reload to enter a new one');
-    });
-
-    panel.append(enemyInput, document.createElement('br'), save, mute, test, resetKey);
-
-    btn.addEventListener('click', () => {
-      panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
-    });
-
-    document.body.append(btn, panel);
-  }
-
-  async function start() {
-    const key = getKey();
-    if (!key) {
-      console.log('tornotifier: no api key, stopping');
-      return;
-    }
-
-    const ok = await checkKey(key);
-    if (!ok) return;
-
-    buildPanel(key);
-
-    const enemy = getEnemy();
-    if (enemy) pollEnemy(key, enemy);
-    pollOC(key);
-
-    setInterval(() => {
-      poll(key);
-      pollOC(key);
-      const id = getEnemy();
-      if (id) pollEnemy(key, id);
-    }, POLL_MS);
-  }
-
-  start();
-})();
+    const panel =
