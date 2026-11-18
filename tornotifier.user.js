@@ -47,3 +47,34 @@
     }
     return key;
   }
+
+   async function checkKey(key) {
+    try {
+      const res = await fetch('https://api.torn.com/v2/user/basic', {
+        headers: { Authorization: 'ApiKey ' + key },
+      });
+      const data = await res.json();
+
+      if (data.error) {
+        console.log('tornotifier: api error -', data.error.error);
+        if (data.error.code === 2) localStorage.removeItem(KEY_NAME);
+        return false;
+      }
+
+      console.log('tornotifier: connected as', data.profile.name);
+      beep();
+      return true;
+    } catch (err) {
+      console.log('tornotifier: request failed -', err);
+      return false;
+    }
+  }
+
+  const key = getKey();
+  if (!key) {
+    console.log('tornotifier: no api key, stopping');
+    return;
+  }
+
+  checkKey(key);
+})();
