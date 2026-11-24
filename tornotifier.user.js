@@ -1,10 +1,12 @@
 // ==UserScript==
 // @name         tornotifier
 // @namespace    sqlinjected
-// @version      1.1
+// @version      1.2
 // @description  sound alerts for torn events
 // @match        https://www.torn.com/*
 // @grant        none
+// @updateURL    https://raw.githubusercontent.com/sqlinjected/tornotifier/main/tornotifier.user.js
+// @downloadURL  https://raw.githubusercontent.com/sqlinjected/tornotifier/main/tornotifier.user.js
 // ==/UserScript==
 
 (function () {
