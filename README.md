@@ -18,6 +18,8 @@ get [tampermonkey](https://www.tampermonkey.net/) (or use torn pda on mobile), o
 
 it'll ask for your api key the first time. a limited access key works. click the page once after it loads or your browser won't let it play sound.
 
+tampermonkey will update it on its own when there's a new version.
+
 ## settings
 
 click the **tn** button in the bottom left of torn to:
@@ -26,6 +28,7 @@ click the **tn** button in the bottom left of torn to:
 - mute/unmute
 - play a test sound
 - reset your api key
+- turn each alert on or off
 
 ## api key
 
