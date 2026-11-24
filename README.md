@@ -1,8 +1,8 @@
 # tornotifier
 
-userscript that plays a sound when stuff happens in torn. made it so i don't have to keep checking the page during wars.
+Torn City userscript that plays a sound when events happen in torn. made it so I don't have to keep checking the page during wars.
 
-still early, adding alerts as i go.
+Early Development Stage
 
 ## what it does
 
