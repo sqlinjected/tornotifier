@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         tornotifier
 // @namespace    sqlinjected
-// @version      1.3
+// @version      1.4
 // @description  sound alerts for torn events
 // @match        https://www.torn.com/*
 // @grant        none
@@ -45,6 +45,7 @@
   }
 
   const hospSound = () => play([988, 150], [1319, 150]);
+  const ocSound = () => play([440, 150], [554, 150], [440, 150]);
 
   // browsers block audio until you click something
   document.addEventListener('click', () => {
@@ -114,7 +115,7 @@
 
     if (ocStatus && oc.status !== ocStatus) {
       console.log('tornotifier: oc', ocStatus, '->', oc.status);
-      if (on('oc')) hospSound();
+      if (on('oc')) ocSound();
     }
     ocStatus = oc.status;
 
