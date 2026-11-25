@@ -3,7 +3,7 @@
 Torn City userscript that plays a sound when events happen in torn. made it so I don't have to keep checking the page during wars.
 
 
-## what it does
+## features
 
 - [x] enemy leaves hospital
 - [x] oc ready / oc status changes
