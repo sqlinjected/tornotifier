@@ -15,7 +15,7 @@ Torn City userscript that plays a sound when events happen in torn. made it so I
 
 get [tampermonkey](https://www.tampermonkey.net/) (or use [tornpda](https://github.com/Manuito83/torn-pda) on mobile), open `tornotifier.user.js`, hit raw, and install.
 
-it'll ask for your api key the first time. a limited access key works. click the page once after it loads or your browser won't let it play sound.
+it will ask for your api key the first time. a limited access key works. click the page once after it loads or your browser won't let it play sound.
 
 tampermonkey will update it on its own when there's a new version.
 
