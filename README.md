@@ -13,11 +13,11 @@ Tornotifier is a Torn City userscript that plays a sound when events happen in t
 
 ## install
 
-get [tampermonkey](https://www.tampermonkey.net/) (or [tornpda](https://github.com/Manuito83/torn-pda) on mobile), open `tornotifier.user.js`, hit raw, and install.
+get [tampermonkey](https://www.tampermonkey.net/) if on pc, and [tornpda](https://github.com/Manuito83/torn-pda) if on mobile, and open `tornotifier.user.js`, hit raw, and install the userscript.
 
 tornotifier will ask for your api key the first time. a limited access key works. click the page once after it loads or your browser won't let it play sound.
 
-tampermonkey will update it on its own when there's a new version.
+tampermonkey will update the userscript on its own when there's a new version.
 
 ## settings
 
