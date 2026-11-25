@@ -1,6 +1,6 @@
 # tornotifier
 
-Torn City userscript that plays a sound when events happen in torn. made it so I don't have to keep checking the page during wars.
+Tornotifier is a Torn City userscript that plays a sound when events happen in torn. Created so you do not have to keep checking various pages during wars.
 
 
 ## features
@@ -15,13 +15,13 @@ Torn City userscript that plays a sound when events happen in torn. made it so I
 
 get [tampermonkey](https://www.tampermonkey.net/) (or [tornpda](https://github.com/Manuito83/torn-pda) on mobile), open `tornotifier.user.js`, hit raw, and install.
 
-it will ask for your api key the first time. a limited access key works. click the page once after it loads or your browser won't let it play sound.
+tornotifier will ask for your api key the first time. a limited access key works. click the page once after it loads or your browser won't let it play sound.
 
 tampermonkey will update it on its own when there's a new version.
 
 ## settings
 
-click the **tn** button in the bottom left of torn to:
+click the **`tn`** button in the bottom left of torn to:
 
 - set the enemy faction id to watch
 - mute/unmute
@@ -33,7 +33,7 @@ click the **tn** button in the bottom left of torn to:
 
 your key stays in your browser and only gets sent to api.torn.com. nothing's stored or shared anywhere else. it only reads data and never does anything in game for you.
 
-it checks the api every 30 sec so it doesn't hit the rate limit.
+it checks the api at 30s intervals by default to mitigate rate limiting.
 
 ## license
 
