@@ -2,7 +2,6 @@
 
 Torn City userscript that plays a sound when events happen in torn. made it so I don't have to keep checking the page during wars.
 
-Early Development Stage
 
 ## what it does
 
